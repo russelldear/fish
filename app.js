@@ -5,7 +5,8 @@ var url = require('url');
 
 var session;
 var flows = {};
-var response1;
+var currentResponse;
+var poll;
 
 http.createServer(function(request, response){
 	var queryData = url.parse(request.url, true).query;
@@ -15,9 +16,11 @@ http.createServer(function(request, response){
 
 		response.writeHead(200, {'Content-Type': 'text/html'});
 		response.write("<html><body>")
-		response1 = response;
+		currentResponse = response;
 
 		searchFlows(response, queryData.key, queryData.searchText);
+		
+		poll = setInterval(function(){ finish(); }, 5000);
 	}
 	else {
 	  	response.writeHead(200, {'Content-Type': 'text/plain'});
@@ -33,7 +36,6 @@ function searchFlows(responseObject, key, searchText){
 			for (i = 0; i < result.length; i++) { 
 				var flowId = result[i].id; 
 				flows[flowId] = "false";
-				setInterval(function(){ finish(); }, 5000);
 				searchFlow(responseObject, flowId, result[i].parameterized_name, searchText);
 			}  
 		});
@@ -56,16 +58,21 @@ function searchFlow(responseObject, flowId, flowName, searchText) {
 }
 
 function finish(){
-console.log(flows);
-	var done = false;
+	
 	for (k = 0; k < flows.length; k++) { 
 		if (flows[k] === "false"){
 			return;
 		}
 	}
+	
+	if (currentResponse.finished == false){
+		currentResponse.write("</body></html>")
+		currentResponse.end();
+	}	
+	else {
+		clearInterval(poll);
+	}
 
-	response1.write("</body></html>")
-	response1.end();		
 }
 
 
