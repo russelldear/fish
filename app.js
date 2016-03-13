@@ -50,8 +50,8 @@ function searchFlow(responseObject, flowId, flowName, searchText) {
 						responseObject.write("<div>Flow: " + flowName + " - Date: " + result[j].created_at + " - <a href=\'https://www.flowdock.com/app/xero/" + flowName + "/threads/" + result[j].thread.id + "\'>" + result[j].content + "</a></div>");
 					}
 				}
-				flows[flowId] = "true";
 			}
+			flows[flowId] = "true";
 		});
 }
 
@@ -60,7 +60,7 @@ console.log(flows);
 	var done = false;
 	for (k = 0; k < flows.length; k++) { 
 		if (flows[k] === "false"){
-			console.log(k);
+			return;
 		}
 	}
 
