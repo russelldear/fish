@@ -4,7 +4,7 @@ var http = require('http');
 var url = require('url');
 
 var session;
-var flows = [];
+var flows = {};
 var response1;
 
 http.createServer(function(request, response){
@@ -32,8 +32,8 @@ function searchFlows(responseObject, key, searchText){
 		function (err, result, response) {
 			for (i = 0; i < result.length; i++) { 
 				var flowId = result[i].id; 
-				flows[flowId] = false;
-				setInterval(finish, 5000);
+				flows[flowId] = "false";
+				setInterval(function(){ finish(); }, 5000);
 				searchFlow(responseObject, flowId, result[i].parameterized_name, searchText);
 			}  
 		});
@@ -50,22 +50,22 @@ function searchFlow(responseObject, flowId, flowName, searchText) {
 						responseObject.write("<div>Flow: " + flowName + " - Date: " + result[j].created_at + " - <a href=\'https://www.flowdock.com/app/xero/" + flowName + "/threads/" + result[j].thread.id + "\'>" + result[j].content + "</a></div>");
 					}
 				}
-				flows[flowId] = true;
+				flows[flowId] = "true";
 			}
 		});
 }
 
 function finish(){
-
+console.log(flows);
 	var done = false;
 	for (k = 0; k < flows.length; k++) { 
-		if (flows[k] == false){
-			return;
+		if (flows[k] === "false"){
+			console.log(k);
 		}
 	}
 
-	//response1.write("</body></html>")
-	//response1.end();		
+	response1.write("</body></html>")
+	response1.end();		
 }
 
 
