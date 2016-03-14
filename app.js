@@ -4,7 +4,6 @@ var http = require('http');
 var url = require('url');
 
 var session;
-var currentResponse;
 
 http.createServer(function(request, response){
 	var queryData = url.parse(request.url, true).query;
@@ -44,6 +43,10 @@ function getFlows(responseObject, key, searchText){
 
 function getMessages(responseObject, flows, searchText) {
 	for (k = 0; k < flows.length; k++) { 
+		if(flows[k] === null){
+			console.log('why?');
+		}
+		else {
 		session.get(
 			'/flows/xero/' + flows[k].parameterized_name + '/messages/',
 			{ search: searchText },
@@ -51,18 +54,21 @@ function getMessages(responseObject, flows, searchText) {
 				if (result.length > 0){
 					for (j = 0; j < result.length; j++) { 
 						if(result[j].thread && result[j].thread.id && result[j].event === "message"){
-							responseObject.write("<div>Flow: " + flowName + " - Date: " + result[j].created_at + " - <a href=\'https://www.flowdock.com/app/xero/" + flowName + "/threads/" + result[j].thread.id + "\'>" + result[j].content + "</a></div>");
+							responseObject.write("<div>Flow: " + flows[k].parameterized_name + " - Date: " + result[j].created_at + " - <a href=\'https://www.flowdock.com/app/xero/" + flows[k].parameterized_name + "/threads/" + result[j].thread.id + "\'>" + result[j].content + "</a></div>");
 						}
 					}
 				}
 				flows[k] = null;
 			});
 	}
+	}
 
-	checkFinish(flows);
+	while(responseObject.finished == false){
+		checkFinish(flows, responseObject);
+	}
 }
 
-function checkFinish(flows){
+function checkFinish(flows, responseObject){
 	
 	for (k = 0; k < flows.length; k++) { 
 		if (flows[k] != null){
@@ -70,11 +76,9 @@ function checkFinish(flows){
 			return;
 		}
 	}
-	
-	if (currentResponse.finished == false){
-		currentResponse.write("</body></html>")
-		currentResponse.end();
-	}	
+
+	responseObject.write("</body></html>")
+	responseObject.end();	
 }
 
 
