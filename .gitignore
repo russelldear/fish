@@ -5,3 +5,9 @@
 *.suo
 /obj/Debug
 /.ntvs_analysis.dat
+/node_modules/flowdock
+/node_modules/http
+/node_modules/sprintf-js
+/node_modules/url
+/node_modules/util
+/bin
