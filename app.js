@@ -2,6 +2,8 @@ var Session = require('flowdock').Session;
 var util = require('util');
 var http = require('http');
 var url = require('url');
+var sprintf = require('sprintf-js').sprintf;
+var html = require('./html.js')
 
 var session;
 var flows = {};
@@ -14,8 +16,8 @@ http.createServer(function(request, response){
 	if (queryData.key && queryData.searchText) {
 		session = new Session(queryData.key);
 
-		response.writeHead(200, {'Content-Type': 'text/html'});
-		response.write("<html><body>")
+        response.writeHead(200, { 'Content-Type': 'text/html' });
+		response.write(html.start())
 		currentResponse = response;
 
 		searchFlows(response, queryData.key, queryData.searchText);
@@ -47,9 +49,9 @@ function searchFlow(responseObject, flowId, flowName, searchText) {
 		{ search: searchText },
 		function (err, result, response) {
 			if (result.length > 0){
-				for (j = 0; j < result.length; j++) { 
-					if(result[j].thread && result[j].thread.id && result[j].event === "message"){
-						responseObject.write("<div>Flow: " + flowName + " - Date: " + result[j].created_at + " - <a href=\'https://www.flowdock.com/app/xero/" + flowName + "/threads/" + result[j].thread.id + "\'>" + result[j].content + "</a></div>");
+				for (j = 0; j < result.length; j++) {
+                    if (result[j].thread && result[j].thread.id && result[j].event === "message") {
+                        responseObject.write(sprintf(html.row(), flowName, result[j].created_at, result[j].thread.id, result[j].content));
 					}
 				}
 			}
@@ -66,7 +68,7 @@ function finish(){
 	}
 	
 	if (currentResponse.finished == false){
-		currentResponse.write("</body></html>")
+		currentResponse.write(html.end())
 		currentResponse.end();
 	}	
 	else {
