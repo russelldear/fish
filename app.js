@@ -5,24 +5,18 @@ var url = require('url');
 var sprintf = require('sprintf-js').sprintf;
 var html = require('./html.js')
 
-var session;
-var flows = {};
-var currentResponse;
-var poll;
+var flows = [];
 
 http.createServer(function(request, response){
 	var queryData = url.parse(request.url, true).query;
 
 	if (queryData.key && queryData.searchText) {
-		session = new Session(queryData.key);
+		var session = new Session(queryData.key);
 
         response.writeHead(200, { 'Content-Type': 'text/html' });
-		response.write(html.start())
-		currentResponse = response;
+		response.write(html.start());
 
-		searchFlows(response, queryData.key, queryData.searchText);
-		
-		poll = setInterval(function(){ finish(); }, 5000);
+		searchFlows(session, response, queryData.key, queryData.searchText);
 	}
 	else {
 	  	response.writeHead(200, {'Content-Type': 'text/plain'});
@@ -30,20 +24,20 @@ http.createServer(function(request, response){
 	}
 }).listen(8666);
 
-function searchFlows(responseObject, key, searchText){
+function searchFlows(session, responseObject, key, searchText){
 	session.get(
 		'/flows/',
 		{ users: 0 },
 		function (err, result, response) {
 			for (i = 0; i < result.length; i++) { 
 				var flowId = result[i].id; 
-				flows[flowId] = "false";
-				searchFlow(responseObject, flowId, result[i].parameterized_name, searchText);
+				flows.push(flowId);
+				searchFlow(session, responseObject, flowId, result[i].parameterized_name, searchText);
 			}  
 		});
 }
 
-function searchFlow(responseObject, flowId, flowName, searchText) {
+function searchFlow(session, responseObject, flowId, flowName, searchText) {
 	session.get(
 		'/flows/xero/' + flowName + '/messages/',
 		{ search: searchText },
@@ -55,26 +49,22 @@ function searchFlow(responseObject, flowId, flowName, searchText) {
 					}
 				}
 			}
-			flows[flowId] = "true";
+			var deleteMe = flows.indexOf(flowId);
+			if (deleteMe > -1) {
+			    flows.splice(deleteMe, 1);
+			}
+			checkFinish(responseObject);
 		});
 }
 
-function finish(){
-	
-	for (k = 0; k < flows.length; k++) { 
-		if (flows[k] === "false"){
-			return;
-		}
-	}
-	
-	if (currentResponse.finished == false){
-		currentResponse.write(html.end())
-		currentResponse.end();
-	}	
-	else {
-		clearInterval(poll);
-	}
+function checkFinish(response){
 
+	if (flows.length > 0){
+		return;
+	}
+	
+	response.write(html.end())
+	response.end();
 }
 
 
